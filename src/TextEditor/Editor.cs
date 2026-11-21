@@ -41,15 +41,17 @@ namespace TextEditor
         {
           case ConsoleKey.S:
             {
-              while (string.IsNullOrWhiteSpace(_filePath))
+              string? inputPath = RenderWithInput("Enter a file name or path: ");
+              if (string.IsNullOrWhiteSpace(inputPath))
               {
-                await Render("Enter a file name or path: ", inputStatus: true);
-                string? inputPath = Console.ReadLine();
-                _filePath = !string.IsNullOrWhiteSpace(inputPath) ? inputPath.Trim() : "";
+                await RenderWithMessage("A file name was not provided.");
               }
-
-              File.WriteAllLines(_filePath, _buffer.Lines);
-              await Render($"{_buffer.LineCount}L ({_buffer.TotalBytes}B) written to \"{_filePath}\"");
+              else
+              {
+                _filePath = inputPath.Trim();
+                File.WriteAllLines(_filePath, _buffer.Lines);
+                await RenderWithMessage($"{_buffer.LineCount}L ({_buffer.TotalBytes}B) written to \"{_filePath}\"");
+              }
               break;
             }
 
@@ -125,29 +127,35 @@ namespace TextEditor
       }
     }
 
-    private async Task Render(string message = "", bool inputStatus = false)
+    private async Task Render()
+    {
+      RenderBuffer();
+      UpdateStatus();
+      ANSI.RenderStatusBar(_status);
+      _charPos = GetCharPos();
+      ANSI.MoveCursor(_cursor.Row - _buffer.RowOff, _charPos - _buffer.ColOff);
+    }
+
+    private async Task RenderWithMessage(string message)
+    {
+      RenderBuffer();
+      ANSI.RenderStatusBar(message);
+      await Task.Delay(3000);
+      await Render();
+    }
+
+    private string? RenderWithInput(string message)
+    {
+      RenderBuffer();
+      ANSI.RenderStatusBar(message);
+      return Console.ReadLine();
+    }
+
+    private void RenderBuffer()
     {
       ANSI.ClearScreen();
       ANSI.MoveCursor(0, 0);
       _buffer.Render();
-
-      if (!string.IsNullOrWhiteSpace(message))
-      {
-        _status = message;
-        ANSI.RenderStatusBar(_status);
-        if (!inputStatus)
-        {
-          await Task.Delay(3000);
-          await Render();
-        }
-      }
-      else if (!inputStatus)
-      {
-        UpdateStatus();
-        ANSI.RenderStatusBar(_status);
-        _charPos = GetCharPos();
-        ANSI.MoveCursor(_cursor.Row - _buffer.RowOff, _charPos - _buffer.ColOff);
-      }
     }
 
     private void Scroll()

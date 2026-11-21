@@ -21,20 +21,12 @@ namespace TextEditor
 
     public Cursor Left()
     {
-      if (Col <= 0)
-      {
-        return new Cursor(Row, 0);
-      }
-      return new Cursor(Row, Col - 1);
+      return new Cursor(Row, (Col <= 0) ? 0 : Col - 1);
     }
 
     public Cursor Right(Buffer buffer)
     {
-      if (Col >= buffer.LineLength(Row))
-      {
-        return new Cursor(Row, Col);
-      }
-      return new Cursor(Row, Col + 1);
+      return new Cursor(Row, Col >= buffer.LineLength(Row) ? Col : Col + 1);
     }
 
     internal Cursor MoveToCol(int col)
