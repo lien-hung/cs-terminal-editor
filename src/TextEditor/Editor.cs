@@ -6,7 +6,9 @@ namespace TextEditor
     Buffer _buffer;
     Cursor _cursor;
     int _charPos;
+
     string _status = string.Empty;
+    bool _isDirty = false;
 
     public Editor(string filePath)
     {
@@ -56,11 +58,18 @@ namespace TextEditor
               }
               File.WriteAllLines(_filePath, _buffer.Lines);
               await RenderWithMessage($"{_buffer.LineCount}L ({_buffer.TotalBytes}B) written to \"{_filePath}\"");
+              _isDirty = false;
               break;
             }
 
           case ConsoleKey.Q:
             {
+              if (_isDirty)
+              {
+                string? input = RenderWithInput("There are unsaved changes. Are you sure you want to quit? [y/n] ");
+                if (!string.IsNullOrWhiteSpace(input) && !input.Trim().Equals("y", StringComparison.CurrentCultureIgnoreCase)) break;
+              }
+
               Console.Write("\u001b[2J\u001b[?47l\x1b[H");
               Environment.Exit(0);
               break;
@@ -77,6 +86,7 @@ namespace TextEditor
               {
                 _buffer = _buffer.Delete(_cursor.Row, _cursor.Col - 1);
                 _cursor = _cursor.Left();
+                _isDirty = true;
               }
               else
               {
@@ -84,6 +94,7 @@ namespace TextEditor
                 int prevRowLen = _buffer.LineLength(_cursor.Row - 1);
                 _cursor = _cursor.Up(_buffer).MoveToCol(prevRowLen);
                 _buffer = _buffer.JoinNextLine(_cursor.Row);
+                _isDirty = true;
               }
               break;
             }
@@ -92,6 +103,7 @@ namespace TextEditor
             {
               _buffer = _buffer.SplitLine(_cursor.Row, _cursor.Col);
               _cursor = _cursor.Down(_buffer).MoveToCol(0);
+              _isDirty = true;
               break;
             }
 
@@ -115,6 +127,7 @@ namespace TextEditor
             {
               _buffer = _buffer.Insert("\t", _cursor.Row, _cursor.Col);
               _cursor = _cursor.Right(_buffer);
+              _isDirty = true;
               break;
             }
 
@@ -124,6 +137,7 @@ namespace TextEditor
               {
                 _buffer = _buffer.Insert(character.KeyChar.ToString(), _cursor.Row, _cursor.Col);
                 _cursor = _cursor.Right(_buffer);
+                _isDirty = true;
               }
               break;
             }
@@ -192,7 +206,7 @@ namespace TextEditor
     private void UpdateStatus()
     {
       string fileName = !string.IsNullOrWhiteSpace(_filePath) ? _filePath : "[no name]";
-      string leftStatus = $"{fileName} ({_buffer.LineCount} lines)";
+      string leftStatus = $"{fileName} ({_buffer.LineCount} lines) {(_isDirty ? "*modified*" : "")}";
       string rightStatus = $"{_cursor.Row + 1}:{_charPos + 1}";
 
       int whitespaceCount = Constants.MaxCols - leftStatus.Length - rightStatus.Length;
