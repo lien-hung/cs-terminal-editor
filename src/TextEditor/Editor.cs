@@ -41,17 +41,21 @@ namespace TextEditor
         {
           case ConsoleKey.S:
             {
-              string? inputPath = RenderWithInput("Enter a file name or path: ");
-              if (string.IsNullOrWhiteSpace(inputPath))
+              if (string.IsNullOrWhiteSpace(_filePath))
               {
-                await RenderWithMessage("A file name was not provided.");
+                string? inputPath = RenderWithInput("Enter a file name or path: ");
+                if (string.IsNullOrWhiteSpace(inputPath))
+                {
+                  await RenderWithMessage("A file name was not provided.");
+                  break;
+                }
+                else
+                {
+                  _filePath = inputPath.Trim();
+                }
               }
-              else
-              {
-                _filePath = inputPath.Trim();
-                File.WriteAllLines(_filePath, _buffer.Lines);
-                await RenderWithMessage($"{_buffer.LineCount}L ({_buffer.TotalBytes}B) written to \"{_filePath}\"");
-              }
+              File.WriteAllLines(_filePath, _buffer.Lines);
+              await RenderWithMessage($"{_buffer.LineCount}L ({_buffer.TotalBytes}B) written to \"{_filePath}\"");
               break;
             }
 
