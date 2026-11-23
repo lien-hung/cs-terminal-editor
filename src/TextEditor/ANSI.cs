@@ -16,6 +16,7 @@ namespace TextEditor
 
     public static void RenderStatusBar(string message)
     {
+      MoveCursor(Constants.MaxRows, 0);
       Console.WriteLine(new string('─', Constants.MaxCols));
       Console.Write(message);
     }

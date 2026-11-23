@@ -42,17 +42,17 @@ namespace TextEditor
         switch (character.Key)
         {
           case ConsoleKey.K:
-            await RenderWithMessage(Constants.HelpMessage);
+            await RenderMessage(Constants.HelpMessage);
             break;
 
           case ConsoleKey.S:
             {
               if (string.IsNullOrWhiteSpace(_filePath))
               {
-                string? inputPath = RenderWithInput("Enter a file name or path: ");
+                string? inputPath = RenderInput("Enter a file name or path: ");
                 if (string.IsNullOrWhiteSpace(inputPath))
                 {
-                  await RenderWithMessage("A file name was not provided.");
+                  await RenderMessage("A file name was not provided.");
                   break;
                 }
                 else
@@ -61,7 +61,7 @@ namespace TextEditor
                 }
               }
               File.WriteAllLines(_filePath, _buffer.Lines);
-              await RenderWithMessage($"{_buffer.LineCount}L ({_buffer.TotalBytes}B) written to \"{_filePath}\"");
+              await RenderMessage($"{_buffer.LineCount}L ({_buffer.TotalBytes}B) written to \"{_filePath}\"");
               _isDirty = false;
               break;
             }
@@ -70,7 +70,7 @@ namespace TextEditor
             {
               if (_isDirty)
               {
-                string? input = RenderWithInput("There are unsaved changes. Are you sure you want to quit? [y/n] ");
+                string? input = RenderInput("There are unsaved changes. Are you sure you want to quit? [y/n] ");
                 if (!string.IsNullOrWhiteSpace(input) && !input.Trim().Equals("y", StringComparison.CurrentCultureIgnoreCase)) break;
               }
 
@@ -151,9 +151,7 @@ namespace TextEditor
 
     private async Task Render()
     {
-      ANSI.ClearScreen();
-      ANSI.MoveCursor(0, 0);
-      _buffer.Render();
+      RenderBuffer();
 
       UpdateStatus();
       ANSI.RenderStatusBar(_status);
@@ -162,18 +160,25 @@ namespace TextEditor
       ANSI.MoveCursor(_cursor.Row - _buffer.RowOff, _charPos - _buffer.ColOff);
     }
 
-    private static async Task RenderWithMessage(string message)
+    private async Task RenderMessage(string message)
     {
-      ANSI.MoveCursor(Constants.MaxRows, 0);
+      RenderBuffer();
       ANSI.RenderStatusBar(message);
       await Task.Delay(3000);
     }
 
-    private static string? RenderWithInput(string message)
+    private string? RenderInput(string message)
     {
-      ANSI.MoveCursor(Constants.MaxRows, 0);
+      RenderBuffer();
       ANSI.RenderStatusBar(message);
       return Console.ReadLine();
+    }
+
+    private void RenderBuffer()
+    {
+      ANSI.ClearScreen();
+      ANSI.MoveCursor(0, 0);
+      _buffer.Render();
     }
 
     private void Scroll()
