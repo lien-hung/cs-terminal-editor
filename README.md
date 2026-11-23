@@ -20,7 +20,8 @@ csedit <filename>
 ```
 
 ## Keybindings
-- `Ctrl+S`: Save buffer to file
+- `Ctrl+K`: Show help
+- `Ctrl+S`: Save to file
 - `Ctrl+Q`: Exit
 
 ## License

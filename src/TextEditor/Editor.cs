@@ -35,12 +35,16 @@ namespace TextEditor
 
     private async Task HandleInput()
     {
-      var character = Console.ReadKey();
+      var character = Console.ReadKey(true);
 
       if (character.Modifiers == ConsoleModifiers.Control)
       {
         switch (character.Key)
         {
+          case ConsoleKey.K:
+            await RenderWithMessage(Constants.HelpMessage);
+            break;
+
           case ConsoleKey.S:
             {
               if (string.IsNullOrWhiteSpace(_filePath))
@@ -147,33 +151,29 @@ namespace TextEditor
 
     private async Task Render()
     {
-      RenderBuffer();
+      ANSI.ClearScreen();
+      ANSI.MoveCursor(0, 0);
+      _buffer.Render();
+
       UpdateStatus();
       ANSI.RenderStatusBar(_status);
+
       _charPos = GetCharPos();
       ANSI.MoveCursor(_cursor.Row - _buffer.RowOff, _charPos - _buffer.ColOff);
     }
 
-    private async Task RenderWithMessage(string message)
+    private static async Task RenderWithMessage(string message)
     {
-      RenderBuffer();
+      ANSI.MoveCursor(Constants.MaxRows, 0);
       ANSI.RenderStatusBar(message);
       await Task.Delay(3000);
-      await Render();
     }
 
-    private string? RenderWithInput(string message)
+    private static string? RenderWithInput(string message)
     {
-      RenderBuffer();
+      ANSI.MoveCursor(Constants.MaxRows, 0);
       ANSI.RenderStatusBar(message);
       return Console.ReadLine();
-    }
-
-    private void RenderBuffer()
-    {
-      ANSI.ClearScreen();
-      ANSI.MoveCursor(0, 0);
-      _buffer.Render();
     }
 
     private void Scroll()
@@ -206,7 +206,7 @@ namespace TextEditor
     private void UpdateStatus()
     {
       string fileName = !string.IsNullOrWhiteSpace(_filePath) ? _filePath : "[no name]";
-      string leftStatus = $"{fileName} ({_buffer.LineCount} lines) {(_isDirty ? "*modified*" : "")}";
+      string leftStatus = $"{fileName} ({_buffer.LineCount} lines) {(_isDirty ? "[*]" : "")}";
       string rightStatus = $"{_cursor.Row + 1}:{_charPos + 1}";
 
       int whitespaceCount = Constants.MaxCols - leftStatus.Length - rightStatus.Length;
