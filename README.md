@@ -19,5 +19,9 @@ To open an existing file:
 csedit <filename>
 ```
 
+## Keybindings
+- `Ctrl+S`: Save buffer to file
+- `Ctrl+Q`: Exit
+
 ## License
 MIT
